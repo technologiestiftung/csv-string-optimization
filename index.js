@@ -15,7 +15,7 @@ let csv_string_optimization = (function () {
  
   let module = {}
 
-  module.readFile = (file, delimiter = ',') => {
+  module.dsv = (file, delimiter = ',') => {
   	let parser = d3_dsv.dsvFormat(delimiter)
   	return new Promise((resolve, reject) => {
   		fs.readFile(file, 'utf8', (err, data) => {
@@ -33,6 +33,51 @@ let csv_string_optimization = (function () {
   	})
   }
 
+  module.json = (file) => {
+  	return new Promise((resolve, reject) => {
+  		fs.readFile(file, 'utf8', (err, data) => {
+  			if(err){
+  				reject(err)
+  			}else{
+  				try{
+  					let json = JSON.parse(data)
+  					resolve(json)
+  				}catch(err){
+  					reject(err)
+  				}
+  			}
+  		})
+  	})
+  }
+
+  module.saveCsv = (path, data, separator = ',') => {
+  	let csv = '', keys = []
+
+  	for(let key in data[0]){
+  		if(csv != '') csv += separator
+  		csv += jfy(key)
+  		keys.push(key)
+  	}
+
+  	data.forEach(d=>{
+  		csv += '\n'
+  		keys.forEach((k,ki)=>{
+  			if(ki>0) csv += separator
+  			csv += jfy(d[k])
+  		})
+  	})
+
+  	module.save(path, csv)
+  }
+
+  module.saveJson = (path, data) => {
+  	module.save(path, JSON.stringify(data))
+  }
+
+  module.loadTemplate = path => {
+  	return module.json(path)
+  }
+
   module.extractColumn = (data, column_name) => {
   	return data.map( d=> { 
   		return d[column_name ]
@@ -43,44 +88,31 @@ let csv_string_optimization = (function () {
   module.fingerprint = fingerprint
   module.knn = knn
 
+  module.cleanFile = (data, template, column_name) => {
+  	//create a hashmap of all replacements
+  	let map = {}
+  	template.forEach(t=>{
+  		let replace = t[0].label
+  		t.forEach(tt =>{
+  			if(tt.ok==2){
+  				replace = tt.label
+  			}
+  		})
+  		t.forEach(tt=>{
+  			map[tt.label] = replace
+  		})
+  	})
 
+  	data.forEach(d=>{
+  		if(d[column_name] in map) d[column_name] = map[d[column_name]]
+  	})
 
-  //Why did i write this function??
-  // module.clean = (data, columns) => {
-  // 	return new Promise ((resolve, reject) => {
-  // 		//first make sure the provided columns are good
-  // 		//check is only performed on the first row
-  // 		let err = false
-  // 		columns.forEach( c => {
-  // 			if(!(c in data[0])){
-  // 				if(!err){
-  // 					err = ''
-  // 				}else{
-  // 					err += ', '
-  // 				}
-  // 				err += 'column '+c+' was not found in data'
-  // 			}
-  // 		})
-  // 		if(err){
-  // 			reject(err)
-  // 		}else{
-  // 			//collecting the matrix before comparing all strings
-  // 			let items = {}
-  // 			data.forEach( (d,di) => {
-  // 				columns.forEach(c => {
-  // 					if(di === 0){
-  // 						items[c] = []
-  // 					}
-  // 					if(items[c].indexOf(d[c])==-1){
-  // 						items[c].push(d[c])
-  // 					}
-  // 				})
-  // 			})
+  	return data;
+  }
 
-  // 			resolve(items, columns)
-  // 		}
-  // 	})
-  // }
+  let replaceMap = (template) => {
+
+  }
 
   module.createTemplate = clusters => {
   	let template = '[\n'
@@ -96,6 +128,16 @@ let csv_string_optimization = (function () {
   	template += ']'
 
   	return template
+  }
+
+  module.mergeTemplate = (oldTemplate, newTemplate) => {
+
+  }
+
+  module.save = (path, data) => fs.writeFileSync(path, data, 'utf8')
+
+  let jfy = (str) => {
+  	return JSON.stringify(str)
   }
 
   return module;

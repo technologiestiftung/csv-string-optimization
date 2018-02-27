@@ -4,4 +4,5 @@
 - pipeline
 - command line
 - merge templates
-
+- jsDocs
+- lint

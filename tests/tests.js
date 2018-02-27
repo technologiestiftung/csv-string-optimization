@@ -1,34 +1,32 @@
-let csvOpti = require('../index.js'),
- 	fingerprint = require('../src/fingerprint.js'),
- 	knn = require('../src/knn.js'),
- 	fs = require('fs')
+let csvOpti = require('../index.js')
 
 let str = 'Ich denk, dass ist eine feine Sache! äöüÄÖÜß.:-)'
-console.log(str, fingerprint.key(str))
-console.log(str, fingerprint.key(str, 'phonetic'))
-console.log('Bezirksamt Neukölln', fingerprint.key('Bezirksamt Neukölln'))
+console.log(str, csvOpti.fingerprint.key(str))
+console.log(str, csvOpti.fingerprint.key(str, 'phonetic'))
+console.log('Bezirksamt Neukölln', csvOpti.fingerprint.key('Bezirksamt Neukölln'))
 
 
-csvOpti.readFile(__dirname + '/data/data.csv', ';')
+csvOpti.dsv(__dirname + '/data/data.csv', ';')
 	.then(data => {
 
 		//id;name;geber;art;jahr;anschrift;politikbereich;zweck;betrag;empfaengerid
-		let column = csvOpti.extractColumn(data, 'name')
+		let column_name = 'name',
+			column = csvOpti.extractColumn(data, column_name)
 
 		/*----- FINGERPRINTING -----*/
 
-		fs.writeFileSync(
-			__dirname + '/output/fp-template.json', 
-			csvOpti.createTemplate(
-				fingerprint.readableCluster(
-					fingerprint.cluster(
-						fingerprint.analyse(
+		let fp_template = csvOpti.createTemplate(
+				csvOpti.fingerprint.readableCluster(
+					csvOpti.fingerprint.cluster(
+						csvOpti.fingerprint.analyse(
 							column
 						)
 					)
 				)
-			), 
-			'utf8')
+			)
+
+		csvOpti.save(__dirname + '/output/fp-template.json', fp_template)
+		csvOpti.saveCsv(__dirname + '/output/fp-cleaned.csv', csvOpti.cleanFile(data, JSON.parse(fp_template), column_name))
 
 		//Save between steps to files
 		// let analysis = fingerprint.analyse(column)
@@ -41,22 +39,22 @@ csvOpti.readFile(__dirname + '/data/data.csv', ';')
 
 		/*----- KNN -----*/
 
-		let reduced_column = knn.reduce(column),
-			clusters = knn.prepare(reduced_column)
+		let reduced_column = csvOpti.knn.reduce(column),
+			clusters = csvOpti.knn.prepare(reduced_column)
 
-		fs.writeFileSync(
-			__dirname + '/output/knn-template.json',
-			csvOpti.createTemplate(
-				knn.readableCluster(
-					knn.cluster(
-						knn.analyse(
+		let knn_template = csvOpti.createTemplate(
+				csvOpti.knn.readableCluster(
+					csvOpti.knn.cluster(
+						csvOpti.knn.analyse(
 							clusters, reduced_column, 0.1
 						)
 					), 
 					reduced_column, column
 				)
-			),
-			'utf8')
+			)
+
+		csvOpti.save(__dirname + '/output/knn-template.json', knn_template)
+		csvOpti.saveCsv(__dirname + '/output/knn-cleaned.csv', csvOpti.cleanFile(data, JSON.parse(knn_template), column_name))
 
 		//Save between steps to files
 		// let clusters = knn.prepare(reduced_column)
