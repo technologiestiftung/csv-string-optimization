@@ -11,19 +11,35 @@ let levenshtein = require('js-levenshtein')
 
 let knn = (function () {
  
-  let module = {},
-    ngrams = {},
-    clusters = {},
-    data
+  let module = {}
+
+  module.reduce = (_data) => {
+    let keys = {},
+      data = _data
+
+    data.forEach((d,di)=>{
+      if(!(d in keys)){
+        keys[d] = []
+      }
+
+      keys[d].push(di)
+    })
+    return keys
+  }
 
   module.prepare = (_data, ngramSize = 6) => {
-    data = _data
+    let data = _data,
+      ngrams = {},
+      clusters = {}
+
+    //identify and group exact matches
     data.forEach( (d, di) => {
+      d = d.toLowerCase()
       if(d.length <= ngramSize){
-        addNgram(d, di)
+        addNgram(d, di, ngrams)
       }else{
         for(var i = 0; i<(d.length - ngramSize); i++){
-          addNgram(d.substr(i,ngramSize), di)
+          addNgram(d.substr(i,ngramSize), di, ngrams)
         }
       }        
     })
@@ -42,21 +58,23 @@ let knn = (function () {
         })
       })
     }
+
+    return clusters;
   }
 
-  module.process = id => {
+  module.process = (id, clusters, data, limit, type) => {
     if(!(id in clusters)){
       return false
     }else{
       let results = []
 
       clusters[id].forEach(c => {
-        index = levenshtein(data[c], data[id])
+        let index = levenshtein(data[c].toLowerCase(), data[id].toLowerCase())
         if(type == 'percent'){
-          index = index / data[id].length
+          index = index / ((data[id].length<data[c].length)?data[id].length:data[c].length)
         }
         if(index < limit){
-          results.push({id:id, target:c, index:index})
+          results.push({id:c, label:data[c], index:index})
         }
       })
 
@@ -72,65 +90,107 @@ let knn = (function () {
    * type = percent|absolute
    */
 
-  module.analyse = (limit = 10, type = 'percent') => {
-    let results = {}
+  module.analyse = (_clusters, _data, limit = 0.1, type = 'percent') => {
+    let results = {},
+      clusters = _clusters,
+      data = _data
+
     data.forEach( (d,di) => {
-      results[di] = {id:di, label:d, nn:module.analyse(di, limit, type)}
+      results[di] = {id:di, label:d, nn:module.process(di, clusters, data, limit, type)}
     })
+
     return results
   }
 
   module.cluster = results => {
     let outClusters = [],
-      removed = []
+      removed = [],
+      results_length = 0,
+      max = -Number.MAX_VALUE
 
-    while(removed < results.length){
-      let nextId = 0
+    for(let key in results){
+      results_length++
+      if(key > max){max = key}
+    }
+
+    let nextId = 0
+    while(removed.length < results_length){
       while(removed.indexOf(nextId)>-1){
         nextId++
       }
 
-      let newCluster = [nextId],
-        needChecking = []
+      if((nextId in results)){
 
-      removed.push(nextId)
+        let newCluster = [nextId],
+          needChecking = []
 
-      results[0].nn.forEach(nn => {
-        needChecking.push(nn.target)
-      })
+        removed.push(nextId)
 
-      while(needChecking.length > 0){
-        let moreNeedChecking = []
-        needChecking.forEach(nn => {
-          removed.push(nn)
-          results[nn].nn.forEach(nnn => {
-            if(!(nnn.target in newCluster)){
-              moreNeedChecking.push(nnn.target)
-            }
+        if(results[nextId].nn){
+          results[nextId].nn.forEach(nn => {
+            needChecking.push(nn.id)
           })
-        })
-        needChecking = moreNeedChecking
+
+          while(needChecking.length > 0){
+            let moreNeedChecking = []
+            needChecking.forEach(nn => {
+
+              if(newCluster.indexOf(nn)==-1){
+                removed.push(nn)
+                newCluster.push(nn)
+              }
+
+              if(results[nn].nn){
+                results[nn].nn.forEach(nnn => {
+                  if(newCluster.indexOf(nnn.id)==-1){
+                    moreNeedChecking.push(nnn.id)
+                  }
+                })
+              }
+
+            })
+            needChecking = moreNeedChecking
+          }
+        }
+
+        outClusters.push(newCluster)
       }
     }
 
     return outClusters
   }
 
-  function addNgram(str, id){
+  module.readableCluster = (clusters, reduced_data, data) => {
+    let readable = []
+
+    clusters.forEach(c=>{
+      let cluster = []
+      c.forEach(cc=>{
+        let label = reduced_data[cc]
+        let t = {c:0, ok:1, ids:[], label:label}
+        data.forEach((d,di)=>{
+          if(d == label){
+            t.c++
+            t.ids.push(di)
+          }
+        })
+        cluster.push(t)
+      })
+      cluster.sort((a,b) => { return b.c-a.c })
+      cluster[0].ok = 2
+      readable.push(cluster)
+    })
+
+    return readable
+  }
+
+  function addNgram(str, id, ngrams){
     if(!(str in ngrams)){
       ngrams[str] = []
     }
     if(ngrams[str].indexOf(id)==-1){
       ngrams[str].push(id)
     }
-  }
-
-  module.ngrams = () => {
-    return ngrams
-  }
-
-  module.clusters = () => {
-    return clusters
   }
 
   return module;

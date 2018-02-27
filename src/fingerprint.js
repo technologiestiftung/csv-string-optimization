@@ -15,7 +15,7 @@ let fingerprint = (function () {
  
   let module = {},
     punct = /[~`!@#$%^&*(){}\[\];:"'<,.>?\/\\|_+=-]/g,
-    printable = /^[A-Za-z0-9]+/g,
+    printable = /[^A-Za-z0-9\s]+/g,
     whitespace = /\s/g
 
   /*
@@ -31,10 +31,10 @@ let fingerprint = (function () {
         str = str.toLowerCase()
       }
       str = str.replace(punct, '')
-      str = str.replace(printable, '')
       if(type=='normal'){
         str = asciify(str)
       }
+      str = str.replace(printable, '')
       let frags = str.split(whitespace)
       let tree = []
       frags.forEach(f => {
@@ -128,7 +128,7 @@ let fingerprint = (function () {
   }
 
   module.analyse = (data, type = 'normal', params = { lang: 'german', stemming:false }) => {
-    let map
+    let map = {}
     data.forEach((d,di)=>{
       let key = module.key(d, type, params)
       if(!(key in map)){
@@ -142,14 +142,49 @@ let fingerprint = (function () {
   module.cluster = map => {
     let clusters = []
     for(let key in map){
+      let cluster = {}
+
       map[key].forEach( (m,mi) => {
-        m['ok'] = (m==0)?2:1
+        if(!(m.label in cluster)){
+          cluster[m.label] = {ids:[],ok:1}
+        }
+
+        cluster[m.label].ids.push(m.id)
       })
+
+      let max = -Number.MAX_VALUE,
+        last_max = false
+
+      for(let kkey in cluster){
+        let l = cluster[kkey].ids.length
+        if(l>max){
+          max = l
+          cluster[kkey].ok = 2
+          if(last_max){
+            cluster[last_max].ok = 1
+          }
+          last_max = kkey
+        }
+      }
 
       clusters.push({
         key:key,
-        cluster:map[key]
+        cluster:cluster
       })
+    }
+
+    module.readableCluster = clusters => {
+      let readable = []
+
+      clusters.forEach(c=>{
+        let cluster = []
+        for(let key in c.cluster){
+          cluster.push({c:c.cluster[key].ids.length, ok:c.cluster[key].ok, ids:c.cluster[key].ids, label:key})
+        }
+        readable.push(cluster)
+      })
+
+      return readable
     }
 
     return clusters

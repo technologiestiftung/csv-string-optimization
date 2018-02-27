@@ -33,40 +33,57 @@ let csv_string_optimization = (function () {
   	})
   }
 
-  module.clean = (data, columns) => {
-  	return new Promise ((resolve, reject) => {
-  		//first make sure the provided columns are good
-  		//check is only performed on the first row
-  		let err = false
-  		columns.forEach( c => {
-  			if(!(c in data[0])){
-  				if(!err){
-  					err = ''
-  				}else{
-  					err += ', '
-  				}
-  				err += 'column '+c+' was not found in data'
-  			}
+  //Why did i write this function??
+  // module.clean = (data, columns) => {
+  // 	return new Promise ((resolve, reject) => {
+  // 		//first make sure the provided columns are good
+  // 		//check is only performed on the first row
+  // 		let err = false
+  // 		columns.forEach( c => {
+  // 			if(!(c in data[0])){
+  // 				if(!err){
+  // 					err = ''
+  // 				}else{
+  // 					err += ', '
+  // 				}
+  // 				err += 'column '+c+' was not found in data'
+  // 			}
+  // 		})
+  // 		if(err){
+  // 			reject(err)
+  // 		}else{
+  // 			//collecting the matrix before comparing all strings
+  // 			let items = {}
+  // 			data.forEach( (d,di) => {
+  // 				columns.forEach(c => {
+  // 					if(di === 0){
+  // 						items[c] = []
+  // 					}
+  // 					if(items[c].indexOf(d[c])==-1){
+  // 						items[c].push(d[c])
+  // 					}
+  // 				})
+  // 			})
+
+  // 			resolve(items, columns)
+  // 		}
+  // 	})
+  // }
+
+  module.createTemplate = clusters => {
+  	let template = '[\n'
+
+  	clusters.forEach(c=>{
+  		template += '	[\n'
+  		c.forEach((item,i)=>{
+  			template += '		{"label":'+JSON.stringify(item.label)+',"c":'+item.c+',"ok":'+item.ok+'}'+ ((i==c.length-1)?'':',') +'\n'
   		})
-  		if(err){
-  			reject(err)
-  		}else{
-  			//collecting the matrix before comparing all strings
-  			let items = {}
-  			data.forEach( (d,di) => {
-  				columns.forEach(c => {
-  					if(di === 0){
-  						items[c] = []
-  					}
-  					if(items[c].indexOf(d[c])==-1){
-  						items[c].push(d[c])
-  					}
-  				})
-  			})
-
-
-  		}
+  		template += '	]\n'
   	})
+
+  	template += ']'
+
+  	return template
   }
 
   return module;
