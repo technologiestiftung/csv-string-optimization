@@ -15,7 +15,8 @@ let knn = (function () {
 
   module.reduce = (_data) => {
     let keys = {},
-      data = _data
+      data = _data,
+      reduced_column = []
 
     data.forEach((d,di)=>{
       if(!(d in keys)){
@@ -24,7 +25,12 @@ let knn = (function () {
 
       keys[d].push(di)
     })
-    return keys
+
+    for(let key in keys){
+      reduced_column.push(key)
+    }
+
+    return reduced_column
   }
 
   module.prepare = (_data, ngramSize = 6) => {

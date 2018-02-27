@@ -173,21 +173,21 @@ let fingerprint = (function () {
       })
     }
 
-    module.readableCluster = clusters => {
-      let readable = []
-
-      clusters.forEach(c=>{
-        let cluster = []
-        for(let key in c.cluster){
-          cluster.push({c:c.cluster[key].ids.length, ok:c.cluster[key].ok, ids:c.cluster[key].ids, label:key})
-        }
-        readable.push(cluster)
-      })
-
-      return readable
-    }
-
     return clusters
+  }
+
+  module.readableCluster = clusters => {
+    let readable = []
+
+    clusters.forEach(c=>{
+      let cluster = []
+      for(let key in c.cluster){
+        cluster.push({c:c.cluster[key].ids.length, ok:c.cluster[key].ok, ids:c.cluster[key].ids, label:key})
+      }
+      readable.push(cluster)
+    })
+
+    return readable
   }
  
   return module;

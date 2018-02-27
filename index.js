@@ -33,6 +33,18 @@ let csv_string_optimization = (function () {
   	})
   }
 
+  module.extractColumn = (data, column_name) => {
+  	return data.map( d=> { 
+  		return d[column_name ]
+  	})
+  }
+
+  //Exposing the comparison modules
+  module.fingerprint = fingerprint
+  module.knn = knn
+
+
+
   //Why did i write this function??
   // module.clean = (data, columns) => {
   // 	return new Promise ((resolve, reject) => {
@@ -73,12 +85,12 @@ let csv_string_optimization = (function () {
   module.createTemplate = clusters => {
   	let template = '[\n'
 
-  	clusters.forEach(c=>{
+  	clusters.forEach((c,ci)=>{
   		template += '	[\n'
   		c.forEach((item,i)=>{
   			template += '		{"label":'+JSON.stringify(item.label)+',"c":'+item.c+',"ok":'+item.ok+'}'+ ((i==c.length-1)?'':',') +'\n'
   		})
-  		template += '	]\n'
+  		template += '	]' + ((ci==clusters.length-1)?'':',') + '\n'
   	})
 
   	template += ']'
