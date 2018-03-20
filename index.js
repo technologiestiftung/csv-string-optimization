@@ -110,10 +110,6 @@ let csv_string_optimization = (function () {
   	return data;
   }
 
-  let replaceMap = (template) => {
-
-  }
-
   module.createTemplate = clusters => {
   	let template = '[\n'
 
@@ -131,7 +127,31 @@ let csv_string_optimization = (function () {
   }
 
   module.mergeTemplate = (oldTemplate, newTemplate) => {
-
+  	let map = {}
+  	oldTemplate.forEach((t,ti)=>{
+  		t.forEach(tt=>{
+  			map[tt.label] = ti
+  		})
+  	})
+  	newTemplate.forEach(t=>{
+  		let exists = false
+  		t.forEach(tt=>{
+  			if(tt.label in map){
+  				exists = map[tt.label]
+  			}
+  		})
+  		if(!exists){
+  			oldTemplate.push(t)
+  		}else{
+  			t.forEach(tt=>{
+  				if(!(tt.label in map)){
+  					tt.ok = 0
+  					oldTemplate[exists].push(tt)
+  				}
+  			})	
+  		}
+  	})
+  	return oldTemplate
   }
 
   module.save = (path, data) => fs.writeFileSync(path, data, 'utf8')

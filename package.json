@@ -6,6 +6,11 @@
   "directories": {
     "test": "tests"
   },
+  "bin": {
+    "csvStrOpti-analyse": "bin/csvStrOpti-analyse",
+    "csvStrOpti-merge": "bin/csvStrOpti-merge",
+    "csvStrOpti-clean": "bin/csvStrOpti-clean"
+  },
   "scripts": {
     "test": "node tests/tests.js"
   },
@@ -26,6 +31,7 @@
   "homepage": "https://github.com/technologiestiftung/csv-string-optimization#readme",
   "dependencies": {
     "cologne-phonetic": "^0.1.0",
+    "commander": "^2.14.1",
     "d3-dsv": "^1.0.8",
     "fs": "0.0.1-security",
     "js-levenshtein": "^1.1.3",

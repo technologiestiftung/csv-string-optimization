@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+
+let csvOpti = require('../'),
+	program = require('commander')
+
+program
+	.version('0.1.0')
+	.option('-f, --foo', 'enable some foo')
+	.option('-b, --bar', 'enable some bar')
+	.option('-B, --baz', 'enable some baz')
+
+
+
+					let column_name = 'name',
+						column = csvOpti.extractColumn(d, column_name)
+
+					/*----- FINGERPRINTING -----*/
+
+					let fp_template = csvOpti.createTemplate(
+							csvOpti.fingerprint.readableCluster(
+								csvOpti.fingerprint.cluster(
+									csvOpti.fingerprint.analyse(
+										column
+									)
+								)
+							)
+						)
+
+					csvOpti.save(__dirname + '/output/fp-template-'+i+'.json', fp_template)
