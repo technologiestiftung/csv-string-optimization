@@ -1,83 +1,93 @@
 #!/usr/bin/env node
 
-let csvOpti = require('../'),
+const csvOpti = require('../'),
 	fs = require('fs'),
 	program = require('commander'),
-	isAtty = false
+	tty = require('tty')
 
-if (require('tty').isatty(1) && process.stdin.isTTY) {
+let isAtty = false
+
+if(tty.isatty(1) && process.stdin.isTTY){
     isAtty = true
 }
 
-program
-	.version(require("../package.json").version, '-v, --version')
-	.option('-m, --method [method]', 'method for analysis (fingerprint or knn)', /^(fingerprint|knn)$/i, 'fingerprint')
-	.option('-c, --column [value]', 'name of column to analyse')
-	.option('-f, --file [value]', 'path to CSV file')
-	.option('-t, --template [value]', 'path to new template file (JSON)')
-	.option('-d, --delimiter [value]', 'default is ","')
-	.option('--knn_ngram_size [value]', 'size of the ngrams for preparations (default:6)')
-	.option('--knn_limit [value]', 'similarity value to be perceived as same (default:0.1)')
-	.option('--finger_type [value]', 'fingerprinting method (default:normal)', /^(normal|phonetic)$/i, 'normal')
-	.option('--finger_lang [value]', 'phonetic language (default:german)', /^(german|other)$/i, 'german')
-	.option('--finger_stemming [value]', 'in case of phonetic should stemming be applied (default:false)', /^(true|false)$/i, 'false')
-	.parse(process.argv)
+program.
+	version(require('../package.json').version, '-v, --version').
+	option('-m, --method [method]', 'method for analysis (fingerprint or knn)', /^(fingerprint|knn)$/i, 'fingerprint').
+	option('-c, --column [value]', 'name of column to analyse').
+	option('-f, --file [value]', 'path to CSV file').
+	option('-t, --template [value]', 'path to new template file (JSON)').
+	option('-d, --delimiter [value]', 'default is ","').
+	option('--knn_ngram_size [value]', 'size of the ngrams for preparations (default:6)').
+	option('--knn_limit [value]', 'similarity value to be perceived as same (default:0.1)').
+	option('--finger_type [value]', 'fingerprinting method (default:normal)', /^(normal|phonetic)$/i, 'normal').
+	option('--finger_lang [value]', 'phonetic language (default:german)', /^(german|other)$/i, 'german').
+	option('--finger_stemming [value]', 'in case of phonetic should stemming be applied (default:false)', /^(true|false)$/i, 'false').
+	parse(process.argv)
 
-if (!program.column) throw new Error("Column name is required '-c'");
-if (!program.file) throw new Error("File path is required '-f'");
-if (!program.template && isAtty) throw new Error("Template path is required '-t'");
+if(!program.column)throw new Error('Column name is required "-c"');
+if(!program.file)throw new Error('File path is required "-f"');
+if(!program.template && isAtty)throw new Error('Template path is required "-t"');
 
 //check if file exists
-if(!fs.existsSync(program.file)) throw new Error("File does not exist '-f'", program.file);
+if(!fs.existsSync(program.file))throw new Error('File does not exist -f"', program.file);
 
 //check if template does not yet exist
-if(fs.existsSync(program.template)) throw new Error("Template file already exists, overwriting is not possible, please choose another file path '-t'");
+if(fs.existsSync(program.template))throw new Error('Template file already exists, overwriting is not possible, please choose another file path "-t"');
 
-csvOpti.dsv(program.file, (program.delimiter || ','))
-	.then(data => {
+csvOpti.dsv(program.file, (program.delimiter || ',')).
+	then(data => {
 
-		 let column_name = program.column,
-		 	column = csvOpti.extractColumn(data, column_name),
-		 	template
+		let column_name = program.column,
+			column = csvOpti.extractColumn(data, column_name),
+			template = null
 
 		/*----- FINGERPRINTING -----*/
 
 		if(program.method == 'knn'){
+
 			let reduced_column = csvOpti.knn.reduce(column),
 				clusters = csvOpti.knn.prepare(reduced_column, (program.knn_ngram_size || 6))
 
-			template = csvOpti.createTemplate(
-					csvOpti.knn.readableCluster(
-						csvOpti.knn.cluster(
-							csvOpti.knn.analyse(
+			template = csvOpti.createTemplate( //eslint-disable-line function-paren-newline
+					csvOpti.knn.readableCluster( //eslint-disable-line function-paren-newline
+						csvOpti.knn.cluster( //eslint-disable-line function-paren-newline
+							csvOpti.knn.analyse( //eslint-disable-line function-paren-newline
 								clusters, reduced_column, (program.knn_limit || 0.1)
-							)
-						), 
-						reduced_column, column
-					)
-				)
+							) //eslint-disable-line function-paren-newline
+						), //eslint-disable-line function-paren-newline
+						reduced_column, column //eslint-disable-line function-paren-newline
+					) //eslint-disable-line function-paren-newline
+				) //eslint-disable-line function-paren-newline
 		}else{
-			template = csvOpti.createTemplate(
-					csvOpti.fingerprint.readableCluster(
-						csvOpti.fingerprint.cluster(
-							csvOpti.fingerprint.analyse(
-								column, (program.finger_type || 'normal'), { lang: (program.finger_lang || 'german'), stemming:(program.finger_stemming || false) }
-							)
-						)
-					)
-				)
+			template = csvOpti.createTemplate( //eslint-disable-line function-paren-newline
+					csvOpti.fingerprint.readableCluster( //eslint-disable-line function-paren-newline
+						csvOpti.fingerprint.cluster( //eslint-disable-line function-paren-newline
+							csvOpti.fingerprint.analyse( //eslint-disable-line function-paren-newline
+								column, (program.finger_type || 'normal'), {
+									'lang': (program.finger_lang || 'german'), 
+									'stemming': (program.finger_stemming || false)
+								}
+							) //eslint-disable-line function-paren-newline
+						) //eslint-disable-line function-paren-newline
+					) //eslint-disable-line function-paren-newline
+				) //eslint-disable-line function-paren-newline
 		}
 
 		if(isAtty){
 			csvOpti.save(program.template, template)
-			console.log('Analysis complete', program.template)
+			//console.log('Analysis complete', program.template)
 		}else{
-			let output = JSON.stringify({colum:column_name, data:data, template:JSON.parse(template)})
+			let output = JSON.stringify({
+				'colum': column_name, 
+				data, 
+				'template': JSON.parse(template)
+			})
 			process.stdout.write(output)
 			process.stdout.write('end')
 		}
 
-	})
-	.catch(err => {
+	}).
+	catch(err => {
 		console.log('There was an error parsing the input data', err)
 	});

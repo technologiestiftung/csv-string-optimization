@@ -1,51 +1,51 @@
 #!/usr/bin/env node
 
-let csvOpti = require('../'),
+const csvOpti = require('../'),
 	fs = require('fs'),
 	program = require('commander'),
-	isAtty = false
+	tty = require('tty')
 
-if (require('tty').isatty(1) && process.stdin.isTTY) {
+let isAtty = false
+
+if(tty.isatty(1) && process.stdin.isTTY) {
     isAtty = true
 }
 
-program
-	.version(require("../package.json").version, '-v, --version')
-	.option('-c, --column [value]', 'name of column to clean')
-	.option('-f, --file [value]', 'path to CSV file')
-	.option('-t, --template [value]', 'path to new template file (JSON)')
-	.option('-o, --output [value]', 'path to cleaned output file (CSV)')
-	.option('-d, --delimiter [value]', 'default is ","')
-	.parse(process.argv)
+program.
+	version(require('../package.json').version, '-v, --version').
+	option('-c, --column [value]', 'name of column to clean').
+	option('-f, --file [value]', 'path to CSV file').
+	option('-t, --template [value]', 'path to new template file (JSON)').
+	option('-o, --output [value]', 'path to cleaned output file (CSV)').
+	option('-d, --delimiter [value]', 'default is ","').
+	parse(process.argv)
 
-if (!program.column && isAtty) throw new Error("Column name is required '-c'");
-if (!program.file && isAtty) throw new Error("File path is required '-f'");
-if (!program.template && isAtty) throw new Error("Template path is required '-t'");
-if (!program.output) throw new Error("Output path is required '-t'");
+if(!program.column && isAtty)throw new Error('Column name is required "-c"');
+if(!program.file && isAtty)throw new Error('File path is required "-f"');
+if(!program.template && isAtty)throw new Error('Template path is required "-t"');
+if(!program.output)throw new Error('Output path is required "-t"');
 
 //check if file exists
-if(!fs.existsSync(program.file) && isAtty) throw new Error("File does not exist '-f'", program.file);
+if(!fs.existsSync(program.file) && isAtty)throw new Error('File does not exist "-f"', program.file);
 
 //check if template exists
-if(!fs.existsSync(program.template) && isAtty) throw new Error("Template does not exist '-t'", program.template);
+if(!fs.existsSync(program.template) && isAtty)throw new Error('Template does not exist "-t"', program.template);
 
 //check if output does not yet exist
-if(fs.existsSync(program.output)) throw new Error("Output file already exists, overwriting is not possible, please choose another file path '-o'");
+if(fs.existsSync(program.output))throw new Error('Output file already exists, overwriting is not possible, please choose another file path "-o"');
 
-function processData(data, column_name, template){
+const processData = (data, column_name, template) => {
 	csvOpti.saveCsv(program.output, csvOpti.cleanFile(data, template, column_name))
 
 	console.log('Cleaning complete.', program.output)
 }
 
 if(isAtty){
-	csvOpti.dsv(program.file, (program.delimiter || ','))
-		.then(data => {
-
+	csvOpti.dsv(program.file, (program.delimiter || ',')).
+		then(data => {
 			processData(data, program.column, JSON.parse(fs.readFileSync(program.template, 'utf8')))
-
-		})
-		.catch(err => {
+		}).
+		catch(err => {
 			console.log('There was an error parsing the input data', err)
 		})	
 }else{
@@ -53,7 +53,7 @@ if(isAtty){
 
 	process.stdin.resume();
 	process.stdin.setEncoding('utf8');
-	process.stdin.on('data', function(data) {
+	process.stdin.on('data', data => {
 		if(data !== 'end'){
 			input += data
 		}else{
@@ -62,4 +62,3 @@ if(isAtty){
 		}		
 	})
 }
-

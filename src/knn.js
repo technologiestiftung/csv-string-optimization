@@ -40,11 +40,11 @@ let knn = (function () {
 
     //identify and group exact matches
     data.forEach( (d, di) => {
-      d = d.toLowerCase()
+      d = d.toLowerCase() //eslint-disable-line no-param-reassign
       if(d.length <= ngramSize){
         addNgram(d, di, ngrams)
       }else{
-        for(var i = 0; i<(d.length - ngramSize); i++){
+        for(let i = 0; i<(d.length - ngramSize); i+=1){
           addNgram(d.substr(i,ngramSize), di, ngrams)
         }
       }        
@@ -68,41 +68,49 @@ let knn = (function () {
     return clusters;
   }
 
-  module.process = (id, clusters, data, limit, type) => {
+  module.process = (id, clusters, data, limit, type) => { //eslint-disable-line max-params
     if(!(id in clusters)){
       return false
-    }else{
-      let results = []
-
-      clusters[id].forEach(c => {
-        let index = levenshtein(data[c].toLowerCase(), data[id].toLowerCase())
-        if(type == 'percent'){
-          index = index / ((data[id].length<data[c].length)?data[id].length:data[c].length)
-        }
-        if(index < limit){
-          results.push({id:c, label:data[c], index:index})
-        }
-      })
-
-      results.sort((a,b) => {
-        return a.index - b.index
-      })
-
-      return results
     }
+
+    let results = []
+
+    clusters[id].forEach(c => {
+      let index = levenshtein(data[c].toLowerCase(), data[id].toLowerCase())
+      if(type == 'percent'){
+        index /= ((data[id].length<data[c].length)?data[id].length:data[c].length)
+      }
+      if(index < limit){
+        results.push({
+          'id': c, 
+          index,
+          'label': data[c]
+        })
+      }
+    })
+
+    results.sort((a,b) => {
+      return a.index - b.index
+    })
+
+    return results
   }
 
   /*
    * type = percent|absolute
    */
 
-  module.analyse = (_clusters, _data, limit = 0.1, type = 'percent') => {
+  module.analyse = (_clusters, _data, limit = 0.1, type = 'percent') => { //eslint-disable-line max-params
     let results = {},
       clusters = _clusters,
       data = _data
 
     data.forEach( (d,di) => {
-      results[di] = {id:di, label:d, nn:module.process(di, clusters, data, limit, type)}
+      results[di] = {
+        'id': di, 
+        'label': d, 
+        'nn': module.process(di, clusters, data, limit, type)
+      }
     })
 
     return results
@@ -115,14 +123,16 @@ let knn = (function () {
       max = -Number.MAX_VALUE
 
     for(let key in results){
-      results_length++
-      if(key > max){max = key}
+      results_length+=1
+      if(key > max){ 
+        max = key 
+      }
     }
 
     let nextId = 0
     while(removed.length < results_length){
       while(removed.indexOf(nextId)>-1){
-        nextId++
+        nextId+=1
       }
 
       if((nextId in results)){
@@ -173,16 +183,23 @@ let knn = (function () {
       let cluster = []
       c.forEach(cc=>{
         let label = reduced_data[cc]
-        let t = {c:0, ok:1, ids:[], label:label}
+        let t = {
+          'c': 0, 
+          'ids': [], 
+          label,
+          'ok': 1
+        }
         data.forEach((d,di)=>{
           if(d == label){
-            t.c++
+            t.c+=1
             t.ids.push(di)
           }
         })
         cluster.push(t)
       })
-      cluster.sort((a,b) => { return b.c-a.c })
+      cluster.sort((a,b) => { 
+        return b.c-a.c 
+      })
       cluster[0].ok = 2
       readable.push(cluster)
     })
@@ -190,7 +207,7 @@ let knn = (function () {
     return readable
   }
 
-  function addNgram(str, id, ngrams){
+  const addNgram = (str, id, ngrams) => {
     if(!(str in ngrams)){
       ngrams[str] = []
     }
