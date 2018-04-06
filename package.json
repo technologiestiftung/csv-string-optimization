@@ -12,7 +12,9 @@
     "csvStrOpti-clean": "bin/csvStrOpti-clean"
   },
   "scripts": {
-    "test": "node tests/tests.js"
+    "test": "node tests/tests.js",
+    "jsdoc": "jsdoc index.js src/fingerprint.js src/knn.js -d ./docs/",
+    "lint": "eslint index.js src/fingerprint.js src/knn.js bin/csvStrOpti-clean bin/csvStrOpti-analyse bin/csvStrOpti-merge"
   },
   "repository": {
     "type": "git",
