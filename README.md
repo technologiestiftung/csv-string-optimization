@@ -37,7 +37,7 @@ npm install csv-string-optimization
 The most common case is loading a csv and then identifying duplicates and then transforming the original 
 
 ```javascript
-const csvStrOpti = require('csv-string-optimization')
+const csvOpti = require('csv-string-optimization')
 
 /*----- LOAD DATA -----*/
 csvOpti.dsv(__dirname + '/data/data-2.csv', ',')
@@ -95,7 +95,7 @@ csvOpti.dsv(__dirname + '/data/data-2.csv', ',')
 You cannot only analyse and transform a whole file, you can also use the underlying methods, e.g. the fingerprinting function:
 
 ```javascript
-const csvStrOpti = require('csv-string-optimization')
+const csvOpti = require('csv-string-optimization')
 
 let str = 'Ich denk, dass ist eine feine Sache! äöüÄÖÜß.:-)'
 console.log(str, csvOpti.fingerprint.key(str))
