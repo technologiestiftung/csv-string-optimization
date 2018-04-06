@@ -37,7 +37,8 @@ csvOpti.dsv(program.file, (program.delimiter || ','))
 	.then(data => {
 
 		 let column_name = program.column,
-		 	column = csvOpti.extractColumn(data, column_name)
+		 	column = csvOpti.extractColumn(data, column_name),
+		 	template
 
 		/*----- FINGERPRINTING -----*/
 
@@ -45,7 +46,7 @@ csvOpti.dsv(program.file, (program.delimiter || ','))
 			let reduced_column = csvOpti.knn.reduce(column),
 				clusters = csvOpti.knn.prepare(reduced_column, (program.knn_ngram_size || 6))
 
-			let template = csvOpti.createTemplate(
+			template = csvOpti.createTemplate(
 					csvOpti.knn.readableCluster(
 						csvOpti.knn.cluster(
 							csvOpti.knn.analyse(
@@ -56,7 +57,7 @@ csvOpti.dsv(program.file, (program.delimiter || ','))
 					)
 				)
 		}else{
-			let template = csvOpti.createTemplate(
+			template = csvOpti.createTemplate(
 					csvOpti.fingerprint.readableCluster(
 						csvOpti.fingerprint.cluster(
 							csvOpti.fingerprint.analyse(

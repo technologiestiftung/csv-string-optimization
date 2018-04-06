@@ -111,7 +111,7 @@ let csv_string_optimization = (function () {
   }
 
   module.createTemplate = clusters => {
-  	return module.niceFormatting(cluster)
+  	return module.niceFormatting(clusters)
   }
 
   module.mergeTemplate = (oldTemplate, newTemplate) => {
