@@ -10,7 +10,7 @@ if (require('tty').isatty(1) && process.stdin.isTTY) {
 }
 
 program
-	.version('0.1.0', '-v, --version')
+	.version(require("../package.json").version, '-v, --version')
 	.option('-c, --column [value]', 'name of column to clean')
 	.option('-f, --file [value]', 'path to CSV file')
 	.option('-t, --template [value]', 'path to new template file (JSON)')

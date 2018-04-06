@@ -10,7 +10,7 @@ if (require('tty').isatty(1) && process.stdin.isTTY) {
 }
 
 program
-	.version('0.1.0', '-v, --version')
+	.version(require("../package.json").version, '-v, --version')
 	.option('-m, --method [method]', 'method for analysis (fingerprint or knn)', /^(fingerprint|knn)$/i, 'fingerprint')
 	.option('-c, --column [value]', 'name of column to analyse')
 	.option('-f, --file [value]', 'path to CSV file')
