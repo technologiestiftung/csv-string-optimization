@@ -111,26 +111,14 @@ let csv_string_optimization = (function () {
   }
 
   module.createTemplate = clusters => {
-  	let template = '[\n'
-
-  	clusters.forEach((c,ci)=>{
-  		template += '	[\n'
-  		c.forEach((item,i)=>{
-  			template += '		{"label":'+JSON.stringify(item.label)+',"c":'+item.c+',"ok":'+item.ok+'}'+ ((i==c.length-1)?'':',') +'\n'
-  		})
-  		template += '	]' + ((ci==clusters.length-1)?'':',') + '\n'
-  	})
-
-  	template += ']'
-
-  	return template
+  	return module.niceFormatting(cluster)
   }
 
   module.mergeTemplate = (oldTemplate, newTemplate) => {
   	let map = {}
   	oldTemplate.forEach((t,ti)=>{
-  		t.forEach(tt=>{
-  			map[tt.label] = ti
+  		t.forEach((tt,tti)=>{
+  			map[tt.label] = [ti,tti]
   		})
   	})
   	newTemplate.forEach(t=>{
@@ -146,12 +134,30 @@ let csv_string_optimization = (function () {
   			t.forEach(tt=>{
   				if(!(tt.label in map)){
   					tt.ok = 0
-  					oldTemplate[exists].push(tt)
-  				}
+  					oldTemplate[exists[0]].push(tt)
+  				}else{
+            oldTemplate[map[tt.label][0]][map[tt.label][1]].c += tt.c
+          }
   			})	
   		}
   	})
   	return oldTemplate
+  }
+
+  module.niceFormatting = (json) => {
+    let template = '[\n'
+
+    json.forEach((c,ci)=>{
+      template += ' [\n'
+      c.forEach((item,i)=>{
+        template += '   {"label":'+JSON.stringify(item.label)+',"c":'+item.c+',"ok":'+item.ok+'}'+ ((i==c.length-1)?'':',') +'\n'
+      })
+      template += ' ]' + ((ci==json.length-1)?'':',') + '\n'
+    })
+
+    template += ']'
+
+    return template
   }
 
   module.save = (path, data) => fs.writeFileSync(path, data, 'utf8')

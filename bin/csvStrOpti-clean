@@ -1,0 +1,65 @@
+#!/usr/bin/env node
+
+let csvOpti = require('../'),
+	fs = require('fs'),
+	program = require('commander'),
+	isAtty = false
+
+if (require('tty').isatty(1) && process.stdin.isTTY) {
+    isAtty = true
+}
+
+program
+	.version('0.1.0', '-v, --version')
+	.option('-c, --column [value]', 'name of column to clean')
+	.option('-f, --file [value]', 'path to CSV file')
+	.option('-t, --template [value]', 'path to new template file (JSON)')
+	.option('-o, --output [value]', 'path to cleaned output file (CSV)')
+	.option('-d, --delimiter [value]', 'default is ","')
+	.parse(process.argv)
+
+if (!program.column && isAtty) throw new Error("Column name is required '-c'");
+if (!program.file && isAtty) throw new Error("File path is required '-f'");
+if (!program.template && isAtty) throw new Error("Template path is required '-t'");
+if (!program.output) throw new Error("Output path is required '-t'");
+
+//check if file exists
+if(!fs.existsSync(program.file) && isAtty) throw new Error("File does not exist '-f'", program.file);
+
+//check if template exists
+if(!fs.existsSync(program.template) && isAtty) throw new Error("Template does not exist '-t'", program.template);
+
+//check if output does not yet exist
+if(fs.existsSync(program.output)) throw new Error("Output file already exists, overwriting is not possible, please choose another file path '-o'");
+
+function processData(data, column_name, template){
+	csvOpti.saveCsv(program.output, csvOpti.cleanFile(data, template, column_name))
+
+	console.log('Cleaning complete.', program.output)
+}
+
+if(isAtty){
+	csvOpti.dsv(program.file, (program.delimiter || ','))
+		.then(data => {
+
+			processData(data, program.column, JSON.parse(fs.readFileSync(program.template, 'utf8')))
+
+		})
+		.catch(err => {
+			console.log('There was an error parsing the input data', err)
+		})	
+}else{
+	let input = ''
+
+	process.stdin.resume();
+	process.stdin.setEncoding('utf8');
+	process.stdin.on('data', function(data) {
+		if(data !== 'end'){
+			input += data
+		}else{
+			input = JSON.parse(input)
+			processData(input.data, input.column, input.template)
+		}		
+	})
+}
+

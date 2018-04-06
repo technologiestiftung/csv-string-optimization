@@ -12,7 +12,7 @@ csvOpti.dsv(__dirname + '/data/data-1.csv', ',')
 		csvOpti.dsv(__dirname + '/data/data-2.csv', ',')
 			.then(data_2 => {
 
-				let output = [{},{}],
+				let output = [{data:data_1},{data:data_2}],
 					data = [data_1,data_2]
 
 				data.forEach( (d, i) => {

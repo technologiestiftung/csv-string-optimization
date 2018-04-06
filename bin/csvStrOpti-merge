@@ -1,0 +1,54 @@
+#!/usr/bin/env node
+
+let csvOpti = require('../'),
+	fs = require('fs'),
+	program = require('commander'),
+	isAtty = false
+
+if (require('tty').isatty(1) && process.stdin.isTTY) {
+    isAtty = true
+}
+
+program
+	.version('0.1.0', '-v, --version')
+	.option('-t, --template [value]', 'path to old template file (JSON)')
+	.option('-n, --new_template [value]', 'path to new template file (JSON)')
+	.option('-o, --output [value]', 'output path to merged template file (JSON)')
+	.parse(process.argv)
+
+if (!program.template) throw new Error("Old template path is required '-t'");
+if (!program.new_template && isAtty) throw new Error("New template path is required '-n'");
+if (!program.output && isAtty) throw new Error("Output path for merged template required '-o'");
+
+//check if file exists
+if(!fs.existsSync(program.template) && isAtty) throw new Error("Old template does not exist '-t'", program.template);
+if(!fs.existsSync(program.new_template) && isAtty) throw new Error("New template does not exist '-n'", program.new_template);
+
+//check if template does not yet exist
+if(fs.existsSync(program.output)) throw new Error("Merged template file already exists, overwriting is not possible, please choose another file path '-o'");
+
+function processData(template, new_template){
+	csvOpti.save(program.output, csvOpti.niceFormatting(csvOpti.mergeTemplate(template, new_template) ))
+	console.log('Merge done.', program.output)
+}
+
+if(isAtty){
+
+	processData(JSON.parse(fs.readFileSync(program.template)), JSON.parse(fs.readFileSync(program.new_template)))
+
+}else{
+
+	let input = ''
+
+	process.stdin.resume();
+	process.stdin.setEncoding('utf8');
+	process.stdin.on('data', function(data) {
+		if(data !== 'end'){
+			input += data
+		}else{
+			input = JSON.parse(input)
+			processData(JSON.parse(fs.readFileSync(program.template)), input.template)
+		}		
+	})
+
+}
