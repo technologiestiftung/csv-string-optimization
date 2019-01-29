@@ -1,4 +1,7 @@
 # csv-string-optimization
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/technologiestiftung/csv-string-optimization.svg)](https://greenkeeper.io/)
+
 As part of the Technologiestiftung Berlin's open data agenda we are working on tools to support citizens deal with open data.
 
 The string optimization module is trying to identify similar names in CSV column and allows you to reduce those to the most common string or another of your choice. It can be used as a module in other node.js scripts or as a command line tool.
